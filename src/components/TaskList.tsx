@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { List } from "@mui/material";
+import { Alert, Box, CircularProgress, List } from "@mui/material";
 import TaskItem from "./TaskItem";
 import { fetchTasks } from "../api/taskApi";
 import { setTasks } from "../features/tasks/tasksSlice";
@@ -17,6 +17,7 @@ const TasksList: React.FC = () => {
     queryKey: ["tasks"],
     queryFn: fetchTasks,
   });
+
   useEffect(() => {
     if (data) {
       dispatch(setTasks(data));
@@ -34,8 +35,16 @@ const TasksList: React.FC = () => {
     }
   }, [tasks, filter]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError && error) return <div>Error: {error.message}</div>;
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" pt={8}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  if (isError) {
+    return <Alert severity="error">Error: {error?.message}</Alert>;
+  }
 
   return (
     <List>

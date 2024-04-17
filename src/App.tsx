@@ -14,7 +14,6 @@ const GlobalErrorSnackbar: React.FC = () => {
   const error = useSelector((state: RootState) => state.tasks.error);
   const [open, setOpen] = React.useState<boolean>(false);
 
-  console.log("error", error);
   useEffect(() => {
     setOpen(!!error);
   }, [error]);
@@ -54,7 +53,7 @@ function App() {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <Container maxWidth="sm">
+        <Container maxWidth="md">
           <AddTaskForm />
           <FilterTasks />
           <TasksList />

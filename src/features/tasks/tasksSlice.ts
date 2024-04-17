@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Task } from "./types";
 
+export type FilterOptions = "all" | "completed" | "incomplete";
+
 interface TasksState {
   tasks: Task[];
-  filter: "all" | "completed" | "incomplete";
+  filter: FilterOptions;
   error: string | null;
 }
 
@@ -47,10 +49,7 @@ const tasksSlice = createSlice({
     clearCompletedTasks: (state) => {
       state.tasks.forEach((task) => (task.completed = false));
     },
-    setFilter: (
-      state,
-      action: PayloadAction<"all" | "completed" | "incomplete">
-    ) => {
+    setFilter: (state, action: PayloadAction<FilterOptions>) => {
       state.filter = action.payload;
     },
     apiErrorOccurred: (state, action: PayloadAction<string>) => {

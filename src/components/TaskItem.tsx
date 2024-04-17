@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Checkbox,
   IconButton,
@@ -8,6 +8,13 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import {
+  removeTask,
+  toggleTask,
+  updateTaskText,
+  apiErrorOccurred,
+} from "../features/tasks/tasksSlice";
 import { Task } from "../features/tasks/types";
 import {
   deleteTask,
@@ -15,13 +22,6 @@ import {
   markComplete,
   markIncomplete,
 } from "../api/taskApi";
-import { useDispatch } from "react-redux";
-import {
-  apiErrorOccurred,
-  removeTask,
-  toggleTask,
-  updateTaskText,
-} from "../features/tasks/tasksSlice";
 
 interface TaskItemProps {
   task: Task;
@@ -33,15 +33,20 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const [editMode, setEditMode] = useState(false);
   const [editedText, setEditedText] = useState(task.text);
 
+  const handleError = useCallback(
+    (error: Error) => {
+      dispatch(apiErrorOccurred(error.message));
+    },
+    [dispatch]
+  );
+
   const deleteMutation = useMutation({
     mutationFn: () => deleteTask(task.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       dispatch(removeTask(task.id));
     },
-    onError: (error: Error) => {
-      dispatch(apiErrorOccurred(error.message));
-    },
+    onError: handleError,
   });
 
   const updateTextMutation = useMutation({
@@ -51,7 +56,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
       setEditMode(false);
     },
     onError: (error: Error) => {
-      dispatch(apiErrorOccurred(error.message));
+      handleError(error);
       setEditMode(false);
     },
   });
@@ -63,73 +68,68 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
       dispatch(toggleTask(task.id));
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: (error: Error) => {
-      dispatch(apiErrorOccurred(error.message));
-    },
+    onError: handleError,
   });
 
-  const handleToggleCompleted = () => {
+  const handleToggleCompleted = useCallback(() => {
     toggleCompletionMutation.mutate();
-  };
+  }, [toggleCompletionMutation]);
 
-  const handleBlurUpdateText = () => {
-    console.log(editedText, task.text);
+  const handleBlurUpdateText = useCallback(() => {
     if (editedText !== task.text) {
       updateTextMutation.mutate();
     }
     setEditMode(false);
-  };
+  }, [editedText, task.text, updateTextMutation]);
 
-  const handleChangeText = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedText(e.target.value);
-  };
+  const handleChangeText = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEditedText(e.target.value);
+    },
+    []
+  );
 
   return (
-    <>
-      <ListItem
-        secondaryAction={
-          <IconButton
-            edge="end"
-            aria-label="delete"
-            onClick={() => deleteMutation.mutate()}
-          >
-            <DeleteIcon />
-          </IconButton>
-        }
-        disablePadding
-      >
-        <Checkbox
-          edge="start"
-          checked={task.completed}
-          tabIndex={-1}
-          disableRipple
-          inputProps={{ "aria-labelledby": `checkbox-list-label-${task.id}` }}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleCompleted();
-          }}
+    <ListItem
+      secondaryAction={
+        <IconButton
+          edge="end"
+          aria-label="delete"
+          onClick={() => deleteMutation.mutate()}
+        >
+          <DeleteIcon />
+        </IconButton>
+      }
+      disablePadding
+    >
+      <Checkbox
+        edge="start"
+        checked={task.completed}
+        tabIndex={-1}
+        disableRipple
+        inputProps={{ "aria-labelledby": `checkbox-list-label-${task.id}` }}
+        onClick={handleToggleCompleted}
+      />
+      {editMode ? (
+        <TextField
+          value={editedText}
+          onChange={handleChangeText}
+          onBlur={handleBlurUpdateText}
+          autoFocus
+          fullWidth
         />
-        {editMode ? (
-          <TextField
-            value={editedText}
-            onChange={handleChangeText}
-            onBlur={handleBlurUpdateText}
-            autoFocus
-            fullWidth
-          />
-        ) : (
-          <Typography
-            sx={{
-              textDecoration: task.completed ? "line-through" : "none",
-              cursor: "pointer",
-            }}
-            onClick={() => setEditMode(true)}
-          >
-            {task.text}
-          </Typography>
-        )}
-      </ListItem>
-    </>
+      ) : (
+        <Typography
+          sx={{
+            textDecoration: task.completed ? "line-through" : "none",
+            cursor: "pointer",
+          }}
+          onClick={() => setEditMode(true)}
+        >
+          {task.text}
+        </Typography>
+      )}
+    </ListItem>
   );
 };
 

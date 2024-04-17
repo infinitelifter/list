@@ -9,19 +9,6 @@ export const fetchTasks = async (): Promise<Task[]> => {
   }
   return response.json();
 };
-// export const fetchTasks = async (
-//   filter: "all" | "completed"
-// ): Promise<Task[]> => {
-//   let url = `${baseUrl}/tasks`;
-//   if (filter === "completed") {
-//     url += `/completed`;
-//   }
-//   const response = await fetch(url);
-//   if (!response.ok) {
-//     throw new Error("Network response not ok");
-//   }
-//   return response.json();
-// };
 
 export const addTask = async (text: string): Promise<Task> => {
   const response = await fetch(`${baseUrl}/tasks`, {
